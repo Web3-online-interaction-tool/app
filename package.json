@@ -1,0 +1,29 @@
+{
+  "name": "web3-interaction-tool",
+  "version": "1.0.0",
+  "description": "Interact using web3 tools. Have your interactions saved in the blockchain for ever",
+  "main": "server.js",
+  "scripts": {
+    "test": "nom run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Web3-online-interaction-tool/POC.git"
+  },
+  "keywords": [
+    "web3",
+    "sablier.finance",
+    "superfluid",
+    "webRTC",
+    "streaming-payments",
+    "IPFS",
+    "filecoin",
+    "NFT"
+  ],
+  "author": "Prashanth Candrashekar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Web3-online-interaction-tool/POC/issues"
+  },
+  "homepage": "https://github.com/Web3-online-interaction-tool/POC#readme"
+}
