@@ -1,0 +1,20 @@
+{
+  "name": "Audio lab : Let's swim in the Audioverse",
+  "description": "The Web3 Ocean podcast is at the intersection of Audio, Blockchain, Community, and Data. Connect with the Host at https://twitter.com/ArbalestPartner and enjoy the benefits of the Audio Lab NFT.",
+  "image": "https://arweave.net/x7C-9kVe5th1yvbpo8G8mTaaOqrNdobvfZMVG_42zfw",
+  "attributes": [
+    { "trait_type": "Show", "value": "The Web3 Ocean🎙️" },
+    { "trait_type": "Episode", "value": "The Road to Davos : Ocean Protocol" },
+    { "trait_type": "Creator", "value": " saswat@republicofocean.com" },
+    { "trait_type": "Duration", "value": "38:12" },
+    { "trait_type": "Scarcity", "value": "Rare" }
+  ],
+  "external_url": "https://web3ocean.uncut.fm/nft/34359738486",
+  "uncut.fm": {
+    "type": "EPISODE",
+    "nftId": "34359738486",
+    "showId": "12884901917",
+    "episodeId": "4230"
+  },
+  "animation_url": "https://arweave.net/o17Hwec3IEkzuUZTdawxVhZhRTG-pa2fuxppnAKrzy8"
+}

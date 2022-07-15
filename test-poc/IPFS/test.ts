@@ -6,6 +6,7 @@ async function loadIpfs() {
     url: "http://localhost:5001",
     repo: "./ipfs",
   });
+  s;
 
   return node;
 }
