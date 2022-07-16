@@ -10,10 +10,17 @@ import { useStore } from "../global_stores";
 
 export default function Home() {
   const showToastFunc = useStore((state) => state.showToastFunc);
+  const [shouldRecordAudio, setShouldRecordAudio] = React.useState(false);
+
+  const handleAudioRecordDecissionChange = () => {
+    setShouldRecordAudio(!shouldRecordAudio);
+  };
 
   // Wallet connection states
-  const [connectionStatus, setConnectionStatus] = useState(false); // false
-  const [myAddress, setMyAddress] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState(true); // false
+  const [myAddress, setMyAddress] = useState(
+    "0xb21805e1D5c438984D05AB8e5291f0d8DD489013"
+  );
   const [currentAccount, setCurrentAccount] = useState({});
 
   // States related to this client for this connection session
@@ -75,6 +82,16 @@ export default function Home() {
               onChange={(e) => setPerHourCost(e.target.value)}
               value={perHourCost}
             />
+            <br />
+            <br />
+            <label>
+              <input
+                type="checkbox"
+                checked={shouldRecordAudio}
+                onChange={handleAudioRecordDecissionChange}
+              />
+              My Value
+            </label>
             <br />
             <br />
             <button

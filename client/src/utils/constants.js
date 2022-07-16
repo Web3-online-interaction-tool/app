@@ -1,9 +1,11 @@
 const ENVIRONMENT = "DEV"; // PROD / DEV
 export const LLAMA_TIME_CONTRACT_ADDRESS =
-  "0x5A1f011E8F010f8B6Abf81e75Db34866b685ca54";
+  "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
+// "0x5A1f011E8F010f8B6Abf81e75Db34866b685ca54";
 
 export const DAI_CONTRACT_ADDRESS =
-  "0x5eD8BD53B0c3fa3dEaBd345430B1A3a6A4e8BD7C";
+  // "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
+  "0x332C7aC34580dfEF553B7726549cEc7015C4B39b";
 
 export const ConvertDAIPreciseToReadable = (BigNumber) =>
   +BigNumber.toString() / 1000000000000000000;
@@ -44,9 +46,10 @@ export const LLAMA_MEET_API_URL =
   ENVIRONMENT === "PROD"
     ? "https://app.llamatime.xyz"
     : "http://localhost:9000";
-export const LLAMA_APP_URL = "PROD"
-  ? "https://app.llamatime.xyz"
-  : "http://localhost:3000";
+export const LLAMA_APP_URL =
+  ENVIRONMENT === "PROD"
+    ? "https://app.llamatime.xyz"
+    : "http://localhost:3000";
 
 export const SESSION_EXPIRY_TIME = 1200000; // 10 min in milliseconds
 

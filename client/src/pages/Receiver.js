@@ -22,13 +22,13 @@ const ReceiverPaymentDetails = ({ perHourCost }) => {
   const minutes = useStore((state) => state.minutes);
   return (
     <div>
-      call was about {minutes.toFixed(0)} minutes{" "}
+      Call was about {minutes.toFixed(0)} minutes{" "}
       {((+minutes * 60) % 60).toFixed(0)} seconds. You have earned ~{" "}
-      {costPerMinutes(perHourCost, minutes).toFixed(2)} $.
+      <b>{costPerMinutes(perHourCost, minutes).toFixed(2)} $.</b>
       <br /> You should receive it to your wallets in few seconds. <br />
       <br />
-      Import the token in to your wallet. Contract address of the token is :{" "}
-      {`${DAI_CONTRACT_ADDRESS}`}
+      Import the token in to your wallet. <br />
+      Contract address of the token is :<b> {`${DAI_CONTRACT_ADDRESS}`}</b>
     </div>
   );
 };

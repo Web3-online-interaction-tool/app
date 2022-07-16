@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const dotenv = require("dotenv");
 const errorMiddleware = require("./middleware/error.middleware");
-// const sessionRouter = require("./routes/session_router");
 const ExpressPeerServer = require("peer").ExpressPeerServer;
 const cors = require("cors");
 const http = require("http");
@@ -46,6 +45,7 @@ class Server {
     try {
       await createOrbitDbInstance();
       console.log("Created OrbitDb instance successfully");
+      const sessionRouter = require("./routes/session_router"); // importing session-storage route after the createOrbitDbInstance
       const peerServer = ExpressPeerServer(this.server, this.optionsForPeerjs);
       this.app.use(cors());
       this.app.use(bodyParser.json());
@@ -55,7 +55,7 @@ class Server {
         })
       );
       this.app.use("/uploads", express.static(__dirname + "/uploads"));
-      // this.app.use("/api/session", sessionRouter);
+      this.app.use("/api/session", sessionRouter);
       this.app.use("/peer", peerServer);
       this.app.use(express.static("client/build"));
       this.app.use(errorMiddleware);
@@ -70,7 +70,7 @@ class Server {
         response.sendFile(filePath);
       });
       peerServer.on("connection", (client) => {
-        console.log("Client connected : ", client);
+        console.log("Client connected ");
       });
     } catch (e) {
       console.log("Error in creating the server instance", e);

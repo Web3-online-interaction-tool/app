@@ -25,13 +25,14 @@ const CallerPaymentDetails = ({ receiverPerHourCost }) => {
   return (
     <div className="container center">
       <span>
-        Session was for {Math.floor(minutes)} minutes {(minutes * 60) % 60}
+        Session was for {Math.floor(minutes)} minutes{" "}
+        {Math.floor((minutes * 60) % 60)}{" "}
         seconds.
       </span>
       <br />
       <br />
       <span>
-        You paid ~{costPerMinutes(receiverPerHourCost, minutes).toFixed(2)}
+        You paid ~{costPerMinutes(receiverPerHourCost, minutes).toFixed(2)} $
       </span>
     </div>
   );

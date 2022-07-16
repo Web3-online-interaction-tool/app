@@ -48,7 +48,7 @@ const createOrbitDbInstance = async () => {
       process.exit(1);
     }
     const identityId = await generateId();
-    orbitdb = await OrbitDB.createInstance(node, {
+    orbitDB = await OrbitDB.createInstance(node, {
       id: process.env.IPFS_NODE_ID,
       identity: identityId,
     });
@@ -64,21 +64,22 @@ const createOrbitDbInstance = async () => {
 const sessionDbInstance = async () => {
   try {
     // if the orbitDb instance is not created create one
-    if (!orbitDB) await connectToDatabase();
+    if (!orbitDB) await createOrbitDbInstance();
 
     let db;
-    if (process.env.DB_ADDRESS != undefined) {
+    if (!process.env.DB_ADDRESS) {
       console.log("Creating a new session db");
       const options = {
         // Give write access to ourselves
         accessController: {
-          write: [orbitdb.identity.id],
+          write: [orbitDB.identity.id],
         },
       };
-      db = await orbitDB.docstore("session", options);
+      db = await orbitDB.keyvalue("session", options);
       process.env.DB_ADDRESS = db.address.toString();
-      console.log("Address of the new db created : ", DB_ADDRESS);
-    } else db = await orbit.keyvalue(process.env.DB_ADDRESS);
+      console.log("Address of the new db created : ", process.env.DB_ADDRESS);
+    } else db = await orbitDB.keyvalue(process.env.DB_ADDRESS);
+    await db.load();
     return db;
   } catch (e) {
     console.log("Error in getting session db instance. Error : ", e);

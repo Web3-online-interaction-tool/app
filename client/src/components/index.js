@@ -205,7 +205,14 @@ export const Timer = () => {
     };
   }, []);
   return (
-    <div className="container center">
+    <div
+      className="container center"
+      style={{
+        backgroundColor: "#ffff",
+        padding: "10px",
+        borderRadius: "20px",
+      }}
+    >
       <span>{`${Math.floor(minutes / 60)}:${Math.floor(minutes)}:${Math.floor(
         seconds % 60
       )}`}</span>

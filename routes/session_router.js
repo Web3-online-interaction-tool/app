@@ -21,30 +21,35 @@ router.post(
       .isLength({ min: 3, max: 400 })
       .withMessage("Invalid peerId"),
     check("perHourCost").isInt().withMessage("Invalid perHourCost"),
+    check("recordAudio").isBoolean().withMessage("Invalid perHourCost"),
   ],
   async (request, response, next) => {
     try {
+      const db = await sessionDbInstance();
       const errors = validationResult(request);
       if (!errors.isEmpty()) {
         return next(
           new CustomError("Invalid fields", 400, "00002", errors.array())
         );
       }
-      const { toAddress, sessionId, peerId, perHourCost } = request.body;
-      const session = await sessionDbInstance.get(sessionId);
-      if (session.length > 0) {
-        const sessionDetails = session[0];
+      const { toAddress, sessionId, peerId, perHourCost, recordAudio } =
+        request.body;
+      const session = db.get(sessionId);
+
+      if (session) {
+        const sessionDetails = { ...session, peerId };
         // await Session.findOneAndUpdate({ sessionId }, { peerId });
-        sessionDetails = { ...sessionDetails, peerId };
-        // return response.status(200).send({});
+        await db.set(sessionId, sessionDetails);
+        return response.status(200).send({});
       }
-      const newSession = new Session({
+      const newSession = {
         toAddress,
         sessionId,
         peerId,
         perHourCost,
-      });
-      await newSession.save();
+        recordAudio,
+      };
+      await db.set(sessionId, newSession);
       response.status(201).send({});
     } catch (error) {
       console.log({ error });
@@ -59,20 +64,27 @@ router.post(
 
 router.get("/:sessionId", async (request, response) => {
   try {
+    const db = await sessionDbInstance();
     const { sessionId } = request.params;
-    const sessionDetails = await Session.findOne({
-      sessionId,
-    });
+    const sessionDetails = db.get(sessionId);
 
     if (!sessionDetails)
       return response
         .status(409)
         .send({ message: "Session expired or invalid" });
-    const { toAddress, peerId, perHourCost, fromAddress } = sessionDetails;
+    const { toAddress, peerId, perHourCost, fromAddress, recordAudio } =
+      sessionDetails;
 
     response
       .status(200)
-      .send({ sessionId, toAddress, peerId, perHourCost, fromAddress });
+      .send({
+        sessionId,
+        toAddress,
+        peerId,
+        perHourCost,
+        fromAddress,
+        recordAudio,
+      });
   } catch (error) {
     console.log("Error : ", error);
     response.status(500).send({
@@ -104,23 +116,4 @@ router.put("/", async (request, response) => {
   }
 });
 
-// router.put("/upload", async (request, response) => {
-//   try {
-//     const { sessionId, fromAddress, durationInSeconds } = request.body;
-//     await Session.findOneAndUpdate(
-//       {
-//         sessionId,
-//       },
-//       { fromAddress, durationInSeconds }
-//     );
-//     response.status(200).send({});
-//   } catch (error) {
-//     console.log("Error : ", error);
-//     response.status(500).send({
-//       result: 0,
-//       message: "Something went wrong",
-//       payload: { error },
-//     });
-//   }
-// });
 module.exports = router;

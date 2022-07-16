@@ -1,28 +1,23 @@
-import OrbitDB from "orbit-db";
-import { create } from "ipfs";
-
-async function loadIpfs() {
-  const node = await create({
-    url: "http://localhost:5001",
-    repo: "./ipfs",
-  });
-
-  return node;
-}
-
-import Identities from "orbit-db-identity-provider";
+const Identities = require("orbit-db-identity-provider");
+const OrbitDB = require("orbit-db");
+const IPFS = require("ipfs");
 
 async function main() {
   try {
-    const node = await loadIpfs();
+    const ipfs = await IPFS.create({
+      url: "http://localhost:5001",
+      repo: "./ipfs",
+      EXPERIMENTAL: {
+        pubsub: true,
+      },
+    });
     // console.log({ node });
     const identityId = Math.random();
     console.log({ identityId });
     const identityOptions = { id: identityId };
     const identity = await Identities.createIdentity(identityOptions);
     console.log(identity);
-    const orbitdb = await OrbitDB.createInstance(node, {
-      id: "12D3KooWD3VhKCEWM9YAhPT11iHtH6yG6vWsBh6sKUR5CMWmuAUU",
+    const orbitdb = await OrbitDB.createInstance(ipfs, {
       identity,
     });
     console.log({ accessId: orbitdb.identity.id });
@@ -44,14 +39,12 @@ async function main() {
 
     const value1 = db.get("121432423668888");
     console.log({ value1 });
-
-    // await db.set("12143242366", {
-    //   test: "testing the value in the doc store",
-    //   anotherValue: "Another value",
-    // });
-    // const value3 = await db.get("12143242366");
-    // console.log({ value3 });
-    // });
+    await db.set("121432423668888", {
+      test: "testing the value in the doc store",
+      anotherValue: "another value",
+    });
+    const value2 = db.get("121432423668888");
+    console.log({ value2 });
   } catch (e) {
     console.log("Error : ", e);
   }
