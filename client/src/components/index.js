@@ -360,6 +360,7 @@ export const MintAndDeposit = ({
         {" "}
         Mint and Deposit
       </button>
+      <br />
       {minting && (
         <span>
           Pleas wait... <br />
