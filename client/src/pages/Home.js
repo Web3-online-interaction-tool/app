@@ -3,7 +3,7 @@ import { CheckIfWalletIsConnected } from "../components/index";
 import {
   setWithExpiry,
   SESSION_EXPIRY_TIME,
-  LLAMA_APP_URL,
+  INTERAKT_APP_URL,
 } from "../utils/constants";
 import uuid from "react-uuid";
 import { useStore } from "../global_stores";
@@ -17,10 +17,8 @@ export default function Home() {
   };
 
   // Wallet connection states
-  const [connectionStatus, setConnectionStatus] = useState(true); // false
-  const [myAddress, setMyAddress] = useState(
-    "0xb21805e1D5c438984D05AB8e5291f0d8DD489013"
-  );
+  const [connectionStatus, setConnectionStatus] = useState(false); // false
+  const [myAddress, setMyAddress] = useState("");
   const [currentAccount, setCurrentAccount] = useState({});
 
   // States related to this client for this connection session
@@ -46,7 +44,7 @@ export default function Home() {
       SESSION_EXPIRY_TIME
     );
     setIsSessionGettingCreated(true);
-    window.open(`${LLAMA_APP_URL}/receiver/${sessionId}`, "_self");
+    window.open(`${INTERAKT_APP_URL}/receiver/${sessionId}`, "_self");
   };
 
   return (

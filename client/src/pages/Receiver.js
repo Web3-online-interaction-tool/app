@@ -4,7 +4,7 @@ import { createSessionAPI } from "../api";
 import { useParams } from "react-router-dom";
 import {
   getWithExpiry,
-  LLAMA_APP_URL,
+  INTERAKT_APP_URL,
   SESSION_MESSAGES,
   costPerMinutes,
   stopBothVideoAndAudio,
@@ -141,7 +141,7 @@ export default function Receiver() {
         try {
           console.log({ _id });
           setPeerId(_id);
-          setCallerLink(`${LLAMA_APP_URL}/caller/${sessionId}`);
+          setCallerLink(`${INTERAKT_APP_URL}/caller/${sessionId}`);
           setSessionCreated(true);
           // make API call to update PeerId and ethereum address to create a session
           console.log({ _perHourCost });

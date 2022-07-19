@@ -49,11 +49,11 @@ export const getWithExpiry = (key) => {
 
 export const INTERAKT_API_URL =
   ENVIRONMENT === "PROD"
-    ? "https://app.llamatime.xyz"
+    ? "https://app.interakt.club"
     : "http://localhost:9000";
-export const LLAMA_APP_URL =
+export const INTERAKT_APP_URL =
   ENVIRONMENT === "PROD"
-    ? "https://app.llamatime.xyz"
+    ? "https://app.interakt.club"
     : "http://localhost:3000";
 
 export const SESSION_EXPIRY_TIME = 1200000; // 10 min in milliseconds
@@ -81,7 +81,7 @@ export const stopBothVideoAndAudio = (stream) => {
 };
 
 export const PEER_HOST =
-  ENVIRONMENT === "PROD" ? "app.llamatime.xyz" : "localhost";
+  ENVIRONMENT === "PROD" ? "app.interakt.club" : "localhost";
 export const PEER_PORT = ENVIRONMENT === "PROD" ? 443 : 9000;
 export const PEER_PATH = "/peer";
 export const PEER_SECURE = ENVIRONMENT === "PROD" ? true : false;
