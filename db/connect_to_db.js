@@ -42,14 +42,13 @@ const createOrbitDbInstance = async () => {
   try {
     node = await loadIpfs();
     // passing the node ID explicitly in the options as node.id() does not return id-string in its promise.
-    if (!process.env.IPFS_NODE_ID) {
+    /*if (!process.env.IPFS_NODE_ID) {
       const nodeId = await node.id();
       console.debug("IPFS_NODE_ID env variable not set ", nodeId);
       process.exit(1);
-    }
+    }*/
     const identityId = await generateId();
     orbitDB = await OrbitDB.createInstance(node, {
-      id: process.env.IPFS_NODE_ID,
       identity: identityId,
     });
   } catch (e) {
