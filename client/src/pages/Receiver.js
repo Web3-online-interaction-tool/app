@@ -50,6 +50,7 @@ export default function Receiver() {
   const [myStream, setMyStream] = useState([]);
   const [callerStream, setCallerStream] = useState([]);
   const [perHourCost, setPerHourCost] = useState(0);
+  const [shouldRecordAudio, setShouldRecordAudio] = useState(false);
 
   const myLocalStream = useRef(null);
 
@@ -115,8 +116,6 @@ export default function Receiver() {
   };
 
   useEffect(() => {
-    console.log("Running!!!");
-
     if (!executedOnce && !sessionCreated) {
       setExecutedOnce(true);
       const sessionId = id;
@@ -128,7 +127,9 @@ export default function Receiver() {
 
       const _perHourCost = sessionDetails.perHourCost;
       const toAddress = sessionDetails.toAddress;
+      const recordAudio = sessionDetails.recordAudio;
       setPerHourCost(_perHourCost);
+      setShouldRecordAudio(recordAudio);
       const peer = new Peer({
         host: PEER_HOST,
         port: PEER_PORT,
@@ -143,11 +144,13 @@ export default function Receiver() {
           setCallerLink(`${LLAMA_APP_URL}/caller/${sessionId}`);
           setSessionCreated(true);
           // make API call to update PeerId and ethereum address to create a session
+          console.log({ _perHourCost });
           createSessionAPI({
             sessionId,
             toAddress,
             perHourCost: _perHourCost,
             peerId: _id,
+            recordAudio,
           })
             .then((data) => {
               console.log({ data });
@@ -302,7 +305,12 @@ export default function Receiver() {
           <Video stream={s} muted={true} />
         ))}
       </div>
-      {peerJoinedTheSession ? <StopCall endSession={endSession} /> : null}
+      {peerJoinedTheSession ? (
+        <StopCall
+          endSession={endSession}
+          shouldRecordAudio={shouldRecordAudio}
+        />
+      ) : null}
     </div>
   ) : (
     <div className="container center">

@@ -181,7 +181,7 @@ export const Video = ({ stream, muted }) => {
   );
 };
 
-export const Timer = () => {
+export const Timer = ({ shouldRecordAudio }) => {
   const [seconds, setSeconds] = useState(0);
 
   const setMinutes = useStore((state) => state.setMinutes);
@@ -216,11 +216,21 @@ export const Timer = () => {
       <span>{`${Math.floor(minutes / 60)}:${Math.floor(minutes)}:${Math.floor(
         seconds % 60
       )}`}</span>
+     
+     
+      <span style={{ color: "brown" }}>
+        {shouldRecordAudio ? "Recording audio" : null}
+      </span>
     </div>
   );
 };
 
-export const StopCall = ({ endSession, minutes, setMinutes }) => {
+export const StopCall = ({
+  endSession,
+  minutes,
+  setMinutes,
+  shouldRecordAudio,
+}) => {
   return (
     <div
       style={{
@@ -247,7 +257,11 @@ export const StopCall = ({ endSession, minutes, setMinutes }) => {
         End Call
       </div>
       <br />
-      <Timer minutes={minutes} setMinutes={setMinutes} />
+      <Timer
+        minutes={minutes}
+        setMinutes={setMinutes}
+        shouldRecordAudio={shouldRecordAudio}
+      />
     </div>
   );
 };

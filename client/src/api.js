@@ -44,6 +44,7 @@ export const createSessionAPI = async ({
   toAddress,
   perHourCost,
   peerId,
+  recordAudio
 }) => {
   try {
     const response = await apiRequest(
@@ -55,6 +56,7 @@ export const createSessionAPI = async ({
         toAddress,
         perHourCost,
         peerId,
+        recordAudio
       }
     );
     return response;

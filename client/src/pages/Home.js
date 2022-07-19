@@ -12,7 +12,7 @@ export default function Home() {
   const showToastFunc = useStore((state) => state.showToastFunc);
   const [shouldRecordAudio, setShouldRecordAudio] = React.useState(false);
 
-  const handleAudioRecordDecissionChange = () => {
+  const handleAudioRecordDecisionChange = () => {
     setShouldRecordAudio(!shouldRecordAudio);
   };
 
@@ -41,6 +41,7 @@ export default function Home() {
         perHourCost,
         createdAt: Date.now(),
         toAddress: myAddress,
+        recordAudio: shouldRecordAudio,
       },
       SESSION_EXPIRY_TIME
     );
@@ -88,9 +89,9 @@ export default function Home() {
               <input
                 type="checkbox"
                 checked={shouldRecordAudio}
-                onChange={handleAudioRecordDecissionChange}
-              />
-              My Value
+                onChange={handleAudioRecordDecisionChange}
+              />{" "}
+              Record the audio
             </label>
             <br />
             <br />
