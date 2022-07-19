@@ -19,6 +19,7 @@ import { CheckIfWalletIsConnected, Video, StopCall } from "../components/index";
 import { getSessionDetailsAPI } from "../api";
 import { useStore } from "../global_stores";
 import { Peer } from "peerjs";
+import { storeFile, getFile } from "../utils/web3.storage";
 
 const CallerPaymentDetails = ({ receiverPerHourCost }) => {
   const minutes = useStore((state) => state.minutes);
@@ -26,14 +27,15 @@ const CallerPaymentDetails = ({ receiverPerHourCost }) => {
     <div className="container center">
       <span>
         Session was for {Math.floor(minutes)} minutes{" "}
-        {Math.floor((minutes * 60) % 60)}{" "}
-        seconds.
+        {Math.floor((minutes * 60) % 60)} seconds.
       </span>
       <br />
       <br />
       <span>
-        You paid ~{costPerMinutes(receiverPerHourCost, minutes).toFixed(2)} $
+        You paid{" "}
+        <b>~{costPerMinutes(receiverPerHourCost, minutes).toFixed(2)} $</b>
       </span>
+      <br />
     </div>
   );
 };
@@ -55,11 +57,12 @@ const CurrentBalance = ({ receiverPerHourCost, llamaTimeBalance }) => {
         color: "#333",
       }}
     >
-      <span>Current Balance : {+currentBalance.toFixed(8)}$</span>
+      <span>Current Balance : {+currentBalance.toFixed(2)}$</span>
     </div>
   );
 };
-function Caller() {
+
+const Caller = () => {
   const [currentAccount, setCurrentAccount] = useState("");
   const [myAddress, setMyAddress] = useState("");
   const [connectionStatus, setConnectionStatus] = useState(false);
@@ -71,51 +74,99 @@ function Caller() {
   const [calculatedNumberOfMinutesLeft, setCalculatedNumberOfMinutedLeft] =
     useState(false);
   const [numberOfMinutedLeft, setNumberOfMinutedLeft] = useState(0);
-
   const showToastFunc = useStore((state) => state.showToastFunc);
   const [receiverPeerId, setReceiverPeerId] = useState("");
   const [receiverAddress, setReceiverAddress] = useState("");
   const [receiverPerHourCost, setReceiverPerHourCost] = useState(0);
-
+  const [shouldRecordAudio, setShouldRecordAudio] = useState(false);
   const { id } = useParams();
-
   const [sessionCreated, setSessionCreated] = useState(false);
   const [requestedToStartTheSession, setRequestedToStartTheSession] =
     useState(false);
-  // const receiverStream = useRef([]);
-  // const myStream = useRef([]);
   const [myStream, setMyStream] = useState([]);
   const [receiverStream, setReceiverStream] = useState([]);
-  // const [peerConnection, setPeerConnection] = useState({});
   const currentBalance = useStore((state) => state.currentBalance);
   const [conn, setConn] = useState(null);
   const [call, setCall] = useState(null);
-
-  const myLocalStream = useRef(null);
-
+  const [recordingBinary, setRecordingBinary] = useState(null);
+  const [recordingObjectUrl, setRecordingObjectUrl] = useState(null);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
 
+  const [sessionId, setSessionId] = useState(null);
+
+  const myLocalStream = useRef(null);
+  const remoteStream = useRef(null);
+  const recorder = useRef(null);
+  const audioElementRef = useRef(null);
+
+  const prepareRecording = async (chunks, mimeType) => {
+    const blob = new Blob(chunks, { type: mimeType });
+    const audioURL = URL.createObjectURL(blob);
+    setRecordingObjectUrl(audioURL);
+    audioElementRef.current.src = audioURL;
+    // store in web3 storage
+    console.log("Attempting to store file in IPFS");
+    const cid = await storeFile([blob], sessionId);
+    console.log({ cid });
+    const files = await getFile(cid);
+    console.log({ files });
+  };
+
+  // start audio recorder
+  function startRecorder(localStream, remoteStream) {
+    // combine two audio tracks
+    let combined = new MediaStream([
+      ...localStream.getAudioTracks(),
+      ...remoteStream.getAudioTracks(),
+    ]);
+    // create recorder object
+    var mediaRecorder = new MediaRecorder(combined);
+
+    // storing the recorder in the ref if needed to be used outside the function
+    recorder.current = mediaRecorder;
+    // start recording
+    mediaRecorder.start();
+
+    // chunks to store the blobs when available
+    let chunks = [];
+
+    // we derive the mimType fron the recorder itself
+    let mimeType = mediaRecorder.mimeType;
+
+    // appends the blobs to chuks when available
+    mediaRecorder.ondataavailable = function (e) {
+      chunks.push(e.data);
+    };
+
+    // when recording is stopped do the following
+    mediaRecorder.onstop = function (e) {
+      prepareRecording(chunks, mimeType);
+    };
+  }
+
+  // end session of the call and close all the video and audio tracks
   const endSession = async () => {
-    console.log("Ending session");
-    console.log("call : ", call, conn);
+    // stop all the tracks from the stream
     stopBothVideoAndAudio(myLocalStream.current);
     if (call) {
+      // end call if not ended
       call.close();
       if (conn)
         conn.send(JSON.stringify({ type: SESSION_MESSAGES.END_SESSION }));
-
       await endStreaming();
     }
   };
 
+  // end the token streaming
   const endStreaming = async () => {
-    console.log("Ending stream");
     const localSessionEnded = localStorage.getItem("session_ended");
     if (!sessionEnded && localSessionEnded !== "true") {
       stopBothVideoAndAudio(myLocalStream.current);
       setSessionEnded(true);
       localStorage.setItem("session_ended", "true");
+      // if opted for recording end recording
+      if (shouldRecordAudio) recorder.current.stop();
       const streamCreation = await streamContract.cancelStream(
         receiverAddress,
 
@@ -123,24 +174,14 @@ function Caller() {
           // eslint-disable-next-line no-undef
           BigInt(3600)
       );
-      console.log(
-        "Mining...",
-        streamCreation.hash,
-        receiverAddress,
 
-        ConvertPerHourCostToContractPerSecondCost(+receiverPerHourCost) /
-          // eslint-disable-next-line no-undef
-          BigInt(3600)
-      );
       await streamCreation.wait();
+
       setCompletedPayment(true);
 
       const Balance = await streamContract.getPayerBalance(myAddress);
       setLlamaTimeBalance(+ConvertDAIPreciseToReadable(Balance).toFixed(2));
-      console.log(
-        "ENded stream, checking for conn to send Success Ended contract message : ",
-        conn
-      );
+
       if (conn) {
         conn.send(
           JSON.stringify({
@@ -156,12 +197,6 @@ function Caller() {
   };
 
   const startStream = async () => {
-    console.log("Start streaming contract called.");
-    console.log({
-      receiverAddress,
-      amount: ConvertPerHourCostToContractPerSecondCost(+receiverPerHourCost),
-      streamContract,
-    });
     const streamCreation = await streamContract.createStream(
       receiverAddress,
 
@@ -180,10 +215,8 @@ function Caller() {
         endSession();
         break;
       case SESSION_MESSAGES.ACKNOWLEDGE_CONNECTION:
-        console.log("Peer acknowledged the connection. Connection is active!");
         break;
       default:
-        console.log("Why here!!!!");
         break;
     }
   };
@@ -200,7 +233,7 @@ function Caller() {
           signer
         );
         setStreamContract(_streamContract);
-        console.log({ myAddress });
+
         let balance = await _streamContract.getPayerBalance(myAddress);
         if (balance > 0) {
           balance = ConvertDAIPreciseToReadable(balance);
@@ -208,17 +241,13 @@ function Caller() {
         } else setLlamaTimeBalance(0);
         setFetchedLlamaTimeBalance(true);
 
-        console.log({ id });
-        const sessionId = id;
-        const { toAddress, peerId, perHourCost } = await getSessionDetailsAPI(
-          sessionId
-        );
-
-        // TODO check if the session is already completed
-        console.log({ toAddress, peerId, perHourCost });
+        const { toAddress, peerId, perHourCost, recordAudio } =
+          await getSessionDetailsAPI(id);
+        setSessionId(id);
         setReceiverPeerId(peerId);
         setReceiverAddress(toAddress);
         setReceiverPerHourCost(perHourCost);
+        setShouldRecordAudio(recordAudio);
         if (balance > 0) {
           const numberOfHourCallWithBalance = +balance / +perHourCost;
           const numberOfMinutes = Math.floor(+numberOfHourCallWithBalance * 60);
@@ -267,9 +296,7 @@ function Caller() {
       alert("" + err);
     });
 
-    console.log({ receiverPeerId });
     setTimeout(() => {
-      console.log("Attempting to connect to the Peer!");
       var _conn = peer.connect(receiverPeerId, {
         reliable: true,
       });
@@ -278,8 +305,6 @@ function Caller() {
         console.log("connected to peer");
       });
       _conn.on("close", function (data) {
-        console.log("dis connected to peer");
-        console.log("Closed the call session!");
         setTimeout(() => {
           endStreaming();
         }, 5000);
@@ -293,30 +318,25 @@ function Caller() {
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
-        console.log("Fetched audio and video stream , ", stream);
         startStream().then(() => {
-          console.log("started payment streaming " + receiverAddress);
-          console.log("Attempting to call peerId : ", receiverPeerId);
-
           const _call = peer.call(receiverPeerId, stream);
           setCall(_call);
-
           _call.on("stream", function (_stream) {
             // start Streaming the moneys
             console.log("Received Stream : ", _stream);
             setReceiverStream([...receiverStream, _stream]);
-
+            remoteStream.current = _stream;
             setTimeout(() => {
-              console.log("Set stream started true");
               setSessionCreated(true);
-            }, 4000);
+              if (shouldRecordAudio) startRecorder(stream, _stream);
+            }, 1000);
           });
           setMyStream([...myStream, stream]);
           myLocalStream.current = stream;
           _call.on("close", () => {
             console.log("Closed the call session!");
             setTimeout(() => {
-              endStreaming();
+              endSession();
             }, 5000);
           });
           _call.on("error", (e) => {
@@ -376,13 +396,13 @@ function Caller() {
                 {fetchedLlamaTimeBalance ? (
                   <div>
                     <span>
-                      Your DAI balance in llamapay account is :{" "}
+                      Your DAI balance in Interackt account is :{" "}
                       <b>{llamaTimeBalance.toFixed(2)} $</b>
                     </span>
                     <br />
                   </div>
                 ) : (
-                  <div>Fetching Llamatime account balance..</div>
+                  <div>Fetching Interackt account balance..</div>
                 )}
                 <br />
                 {llamaTimeBalance !== 0 ? (
@@ -390,10 +410,25 @@ function Caller() {
                     {calculatedNumberOfMinutesLeft ? (
                       <div>
                         <span>
+                          Charge per hour : <b>{receiverPerHourCost}$</b>
+                        </span>
+                        <br />
+                        <br />
+                        <span>
                           You can talk for{" "}
                           <b> {numberOfMinutedLeft} minutes </b>
                           with your current balance.{" "}
                         </span>
+
+                        {shouldRecordAudio ? (
+                          <div>
+                            <br />
+                            <br />
+                            <span style={{ color: "brown" }}>
+                              The audio of this call will be recorded
+                            </span>
+                          </div>
+                        ) : null}
 
                         <div
                           style={{
@@ -477,22 +512,42 @@ function Caller() {
                   ))}
                 </div>
               </div>
-              <StopCall endSession={endSession} />
-            </div>
-          ) : !completedPayment ? (
-            <div className="container center">
-              <span>
-                Completed the session. Please approve the transaction to stop
-                streaming payment...
-              </span>
+              <StopCall
+                shouldRecordAudio={shouldRecordAudio}
+                endSession={endSession}
+              />
             </div>
           ) : (
-            <CallerPaymentDetails receiverPerHourCost={receiverPerHourCost} />
+            <div className="container center">
+              {!completedPayment ? (
+                <div className="container center">
+                  <span>
+                    Completed the session. Please approve the transaction to
+                    stop streaming payment...
+                  </span>
+                </div>
+              ) : (
+                <CallerPaymentDetails
+                  receiverPerHourCost={receiverPerHourCost}
+                />
+              )}
+              <br />
+              <span>Recording of your interaction.</span>
+              <br />
+
+              <audio
+                style={{
+                  display: recordingObjectUrl !== null ? "block" : "none",
+                }}
+                controls={true}
+                ref={audioElementRef}
+              ></audio>
+            </div>
           )}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Caller;
