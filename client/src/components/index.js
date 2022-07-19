@@ -3,6 +3,8 @@ import { ethers } from "ethers";
 import {
   DAI_CONTRACT_ADDRESS,
   ConvertDAIPreciseToReadable,
+  INTERAKT_CONTRACT_ADDRESS,
+  MINT_TOKEN,
 } from "../utils/constants";
 import DAIAbi from "../utils/dai_abi.json";
 import { useStore } from "../global_stores";
@@ -216,8 +218,7 @@ export const Timer = ({ shouldRecordAudio }) => {
       <span>{`${Math.floor(minutes / 60)}:${Math.floor(minutes)}:${Math.floor(
         seconds % 60
       )}`}</span>
-     
-     
+
       <span style={{ color: "brown" }}>
         {shouldRecordAudio ? "Recording audio" : null}
       </span>
@@ -263,5 +264,194 @@ export const StopCall = ({
         shouldRecordAudio={shouldRecordAudio}
       />
     </div>
+  );
+};
+
+const mintAndApproveState = {
+  SING_FOR_MINTING: {
+    name: "SING_FOR_MINTING",
+    text: "1) Please sign to mint the DAI token to your wallet.",
+  },
+  WAITING_FOR_MINTING: {
+    name: "WAITING_FOR_MINTING",
+    text: "1) Waiting for mint transaction to be mined.",
+  },
+  SIGN_FOR_APPROVAL: {
+    name: "SIGN_FOR_APPROVAL",
+    text: "2) Please sign to approve the contract to spend the DAI tokens.",
+  },
+  WAITING_FOR_APPROVAL: {
+    name: "WAITING_FOR_APPROVAL",
+    text: "2) Waiting for approve transaction to be mined.",
+  },
+  SIGN_TO_DEPOSIT: {
+    name: "SIGN_TO_DEPOSIT",
+    text: "3) Please sign to deposit minted DAI to the smart contract.",
+  },
+  WAITING_FOR_DEPOSIT: {
+    name: "WAITING_FOR_DEPOSIT",
+    text: "3) Waiting for deposit transaction to be mined.",
+  },
+  FETCHING_LATEST_BALANCE: {
+    name: "FETCHING_LATEST_BALANCE",
+    text: "Waiting for deposit transaction to be mined.",
+  },
+};
+
+export const MintAndDeposit = ({
+  minting,
+  setMinting,
+  daiContract,
+  streamContract,
+  myAddress,
+  setLlamaTimeBalance,
+}) => {
+  const [showInfoPopUp, setShowInfoPopUp] = useState(false);
+  const [mintText, setMintText] = useState(
+    mintAndApproveState["SING_FOR_MINTING"]["text"]
+  );
+  const closeInfoPopUP = () => setShowInfoPopUp(false);
+
+  const mintAndDepositTestDAI = async () => {
+    try {
+      closeInfoPopUP();
+      setMinting(true);
+      console.log({ daiContract });
+      const _mint = await daiContract["mint(uint256)"](MINT_TOKEN);
+      setMintText(mintAndApproveState["WAITING_FOR_MINTING"]["text"]);
+      await _mint.wait();
+      // approve
+      setMintText(mintAndApproveState["SIGN_FOR_APPROVAL"]["text"]);
+      const approve = await daiContract.approve(
+        INTERAKT_CONTRACT_ADDRESS,
+        MINT_TOKEN
+      );
+      setMintText(mintAndApproveState["WAITING_FOR_APPROVAL"]["text"]);
+      await approve.wait();
+      // deposit
+      setMintText(mintAndApproveState["SIGN_TO_DEPOSIT"]["text"]);
+      const deposit = await streamContract.deposit(MINT_TOKEN);
+      setMintText(mintAndApproveState["WAITING_FOR_DEPOSIT"]["text"]);
+      await deposit.wait();
+      setMintText(mintAndApproveState["FETCHING_LATEST_BALANCE"]["text"]);
+      // update the balance
+      const Balance = await streamContract.getPayerBalance(myAddress);
+      setLlamaTimeBalance(+ConvertDAIPreciseToReadable(Balance).toFixed(2));
+      setMinting(false);
+    } catch (e) {
+      console.log("Error : ", e);
+    }
+  };
+
+  return (
+    <div>
+      {showInfoPopUp && (
+        <MintAndDepositInfo
+          closeInfoPopUP={closeInfoPopUP}
+          mintAndDepositTestDAI={mintAndDepositTestDAI}
+        />
+      )}
+      <button
+        disabled={minting ? true : false}
+        onClick={() => {
+          setShowInfoPopUp(true);
+        }}
+      >
+        {" "}
+        Mint and Deposit
+      </button>
+      {minting && (
+        <span>
+          Pleas wait... <br />
+          {mintText}
+        </span>
+      )}
+    </div>
+  );
+};
+
+export const Popup = (props) => {
+  return (
+    <div className="popup">
+      <div className="popup_open">{props.children}</div>
+    </div>
+  );
+};
+
+export const MintAndDepositInfo = ({
+  mintAndDepositTestDAI,
+  closeInfoPopUP,
+}) => {
+  return (
+    <Popup>
+      <div className="container center">
+        <div
+          style={{
+            width: "70%",
+            margin: "auto",
+            textAlign: "left",
+            padding: "40px",
+            marginTop: "40px",
+            marginButton: "40px",
+          }}
+        >
+          <p>
+            <b>
+              You need to sing thrice to mint the DAI stable coin and deposit
+              into your Interakt wallet (stored in smart contract)
+            </b>
+          </p>
+          <br />
+          <ol>
+            <li>
+              To mint the stable coin from{" "}
+              <a
+                href={`https://rinkeby.etherscan.io/address${DAI_CONTRACT_ADDRESS}`}
+                target="_balnk"
+              >
+                DAI smart contract
+              </a>{" "}
+              deployed on the Rinkeby blockchain
+            </li>
+            <li>
+              To approve the owner ship to{" "}
+              <a
+                href={`https://rinkeby.etherscan.io/address${INTERAKT_CONTRACT_ADDRESS}`}
+                target="_balnk"
+              >
+                Interact smart contract{" "}
+              </a>
+              to spend the DAI token
+            </li>
+            <li>To deposit the DAI token into the smart contract</li>
+          </ol>
+          <br />
+          <span>
+            <i>
+              Since the application is on testnet we mint and deposit 1000 $
+              worth stable coin for you to test.
+            </i>
+          </span>
+          <br />
+          <br />
+          <div
+            style={{
+              width: "80%",
+              display: "grid",
+              gridTemplateColumns: "40% 20% 40%",
+            }}
+          >
+            <button onClick={mintAndDepositTestDAI}>Continue</button>
+            <div></div>
+            <button
+              style={{ backgroundColor: "lightcoral" }}
+              onClick={closeInfoPopUP}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </Popup>
   );
 };

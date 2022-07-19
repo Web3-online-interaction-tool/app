@@ -13,9 +13,17 @@ import {
   PEER_PATH,
   PEER_PORT,
   PEER_DEBUG,
+  DAI_CONTRACT_ADDRESS,
+  MINT_TOKEN,
 } from "../utils/constants";
 import contractABI from "../utils/llama_pay_abi.json";
-import { CheckIfWalletIsConnected, Video, StopCall } from "../components/index";
+import daiContractABI from "../utils/dai_abi.json";
+import {
+  CheckIfWalletIsConnected,
+  Video,
+  StopCall,
+  MintAndDeposit,
+} from "../components/index";
 import { getSessionDetailsAPI } from "../api";
 import { useStore } from "../global_stores";
 import { Peer } from "peerjs";
@@ -71,6 +79,7 @@ const Caller = () => {
   const [llamaTimeBalance, setLlamaTimeBalance] = useState(0);
   const [fetchedLlamaTimeBalance, setFetchedLlamaTimeBalance] = useState(false);
   const [streamContract, setStreamContract] = useState({});
+  const [daiContract, setDaiContract] = useState({});
   const [calculatedNumberOfMinutesLeft, setCalculatedNumberOfMinutedLeft] =
     useState(false);
   const [numberOfMinutedLeft, setNumberOfMinutedLeft] = useState(0);
@@ -92,6 +101,7 @@ const Caller = () => {
   const [recordingObjectUrl, setRecordingObjectUrl] = useState(null);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
+  const [minting, setMinting] = useState(false);
 
   const [ipfsURL, setIpfsURL] = useState(null);
 
@@ -223,6 +233,15 @@ const Caller = () => {
         break;
     }
   };
+  useEffect(() => {
+    if (llamaTimeBalance && receiverPerHourCost) {
+      const numberOfHourCallWithBalance =
+        +llamaTimeBalance / +receiverPerHourCost;
+      const numberOfMinutes = Math.floor(+numberOfHourCallWithBalance * 60);
+      setCalculatedNumberOfMinutedLeft(true);
+      setNumberOfMinutedLeft(numberOfMinutes);
+    }
+  }, [llamaTimeBalance]);
 
   const prepareForTheSession = async () => {
     try {
@@ -237,6 +256,13 @@ const Caller = () => {
         );
         setStreamContract(_streamContract);
 
+        const _daiContract = new ethers.Contract(
+          DAI_CONTRACT_ADDRESS,
+          daiContractABI,
+          signer
+        );
+
+        setDaiContract(_daiContract);
         let balance = await _streamContract.getPayerBalance(myAddress);
         if (balance > 0) {
           balance = ConvertDAIPreciseToReadable(balance);
@@ -264,6 +290,31 @@ const Caller = () => {
     } catch (e) {
       console.log("Error : ", e);
       showToastFunc(e.message || "Session invalid or expired");
+    }
+  };
+
+  const mintAndDepositTestDAI = async () => {
+    try {
+      setMinting(true);
+      console.log({ daiContract });
+      const _mint = await daiContract["mint(uint256)"](MINT_TOKEN);
+      await _mint.wait();
+      // approve
+      const approve = await daiContract.approve(
+        INTERAKT_CONTRACT_ADDRESS,
+        MINT_TOKEN
+      );
+      await approve.wait();
+      // deposit
+
+      const deposit = await streamContract.deposit(MINT_TOKEN);
+      await deposit.wait();
+      // update the balance
+      const Balance = await streamContract.getPayerBalance(myAddress);
+      setLlamaTimeBalance(+ConvertDAIPreciseToReadable(Balance).toFixed(2));
+      setMinting(false);
+    } catch (e) {
+      console.log("Error : ", e);
     }
   };
 
@@ -354,11 +405,6 @@ const Caller = () => {
           e
         );
       });
-    // // make a call to the
-    // setTimeout(() => {
-    //   console.log({ myStream });
-
-    // }, 5000);
     peer.on("error", (e) => {
       console.log("Error on peer connection : ", e);
     });
@@ -443,12 +489,21 @@ const Caller = () => {
                           }}
                         >
                           <div>
-                            <button> Mint and Deposit</button>
+                            <MintAndDeposit
+                              minting={minting}
+                              setMinting={setMinting}
+                              daiContract={daiContract}
+                              streamContract={streamContract}
+                              myAddress={myAddress}
+                              setLlamaTimeBalance={setLlamaTimeBalance}
+                            />
                           </div>
                           <div>
-                            <button onClick={startSession}>
-                              {" "}
-                              Continue with the call{" "}
+                            <button
+                              disabled={minting ? true : false}
+                              onClick={startSession}
+                            >
+                              Continue with the call
                             </button>
                           </div>
                         </div>
@@ -469,7 +524,14 @@ const Caller = () => {
                       </span>
                       <br />
                       <br />
-                      <button>Mint and Deposit</button>
+                      <MintAndDeposit
+                        minting={minting}
+                        setMinting={setMinting}
+                        daiContract={daiContract}
+                        streamContract={streamContract}
+                        myAddress={myAddress}
+                        setLlamaTimeBalance={setLlamaTimeBalance}
+                      />
                     </div>
                   </div>
                 )}
