@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { ethers } from "ethers";
 import {
-  LLAMA_TIME_CONTRACT_ADDRESS,
+  INTERAKT_CONTRACT_ADDRESS,
   ConvertDAIPreciseToReadable,
   SESSION_MESSAGES,
   ConvertPerHourCostToContractPerSecondCost,
@@ -93,6 +93,8 @@ const Caller = () => {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
 
+  const [ipfsURL, setIpfsURL] = useState(null);
+
   const [sessionId, setSessionId] = useState(null);
 
   const myLocalStream = useRef(null);
@@ -111,6 +113,7 @@ const Caller = () => {
     console.log({ cid });
     const files = await getFile(cid);
     console.log({ files });
+    setIpfsURL(`https://ipfs.io/ipfs/${files[0].cid}`);
   };
 
   // start audio recorder
@@ -228,7 +231,7 @@ const Caller = () => {
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
         const _streamContract = new ethers.Contract(
-          LLAMA_TIME_CONTRACT_ADDRESS,
+          INTERAKT_CONTRACT_ADDRESS,
           contractABI,
           signer
         );
@@ -542,6 +545,26 @@ const Caller = () => {
                 controls={true}
                 ref={audioElementRef}
               ></audio>
+              <br />
+              <br />
+              {ipfsURL && (
+                <div>
+                  <span>
+                    Stored in IPFS. URL for you for the file is{" "}
+                    <a rel="noreferrer" href={ipfsURL} target="_blank">
+                      {ipfsURL}
+                    </a>
+                  </span>
+                  <br />
+                  <br />
+                  <span>
+                    This will be stored in IPFS with your wallet DID. Such that
+                    this recording is only accessible by you.
+                    <br />
+                    Work in progress.
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

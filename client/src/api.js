@@ -1,4 +1,4 @@
-import { getWithExpiry, LLAMA_MEET_API_URL } from "./utils/constants";
+import { getWithExpiry, INTERAKT_API_URL } from "./utils/constants";
 
 export async function apiRequest(path, method = "GET", jwtNeeded = true, data) {
   let jwt = "";
@@ -29,7 +29,7 @@ export async function apiRequest(path, method = "GET", jwtNeeded = true, data) {
 export const getSessionDetailsAPI = async (sessionId) => {
   try {
     const response = await apiRequest(
-      `${LLAMA_MEET_API_URL}/api/session/${sessionId}`,
+      `${INTERAKT_API_URL}/api/session/${sessionId}`,
       "GET",
       false
     );
@@ -44,11 +44,11 @@ export const createSessionAPI = async ({
   toAddress,
   perHourCost,
   peerId,
-  recordAudio
+  recordAudio,
 }) => {
   try {
     const response = await apiRequest(
-      `${LLAMA_MEET_API_URL}/api/session`,
+      `${INTERAKT_API_URL}/api/session`,
       "POST",
       false,
       {
@@ -56,7 +56,7 @@ export const createSessionAPI = async ({
         toAddress,
         perHourCost,
         peerId,
-        recordAudio
+        recordAudio,
       }
     );
     return response;

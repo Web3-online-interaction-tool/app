@@ -1,5 +1,5 @@
 const ENVIRONMENT = "DEV"; // PROD / DEV
-export const LLAMA_TIME_CONTRACT_ADDRESS =
+export const INTERAKT_CONTRACT_ADDRESS =
   "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
 // "0x5A1f011E8F010f8B6Abf81e75Db34866b685ca54";
 
@@ -7,7 +7,8 @@ export const DAI_CONTRACT_ADDRESS =
   // "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
   "0x332C7aC34580dfEF553B7726549cEc7015C4B39b";
 
-export const WEB_STORAGE_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDA5NzdhMEY3QTgyOTZmOGFDMjg2QjJiODIxMDZkNjhlMThhOTlkMTMiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTgxNTA3NTgzMzIsIm5hbWUiOiJJbnRlcmFja3kifQ.eG_arM-_YvswSqn8UYg1qs3iBSIRoGerf3G5BRi67sg"
+export const WEB_STORAGE_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDA5NzdhMEY3QTgyOTZmOGFDMjg2QjJiODIxMDZkNjhlMThhOTlkMTMiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTgxNTA3NTgzMzIsIm5hbWUiOiJJbnRlcmFja3kifQ.eG_arM-_YvswSqn8UYg1qs3iBSIRoGerf3G5BRi67sg";
 
 export const ConvertDAIPreciseToReadable = (BigNumber) =>
   +BigNumber.toString() / 1000000000000000000;
@@ -44,7 +45,7 @@ export const getWithExpiry = (key) => {
   return item.value;
 };
 
-export const LLAMA_MEET_API_URL =
+export const INTERAKT_API_URL =
   ENVIRONMENT === "PROD"
     ? "https://app.llamatime.xyz"
     : "http://localhost:9000";
