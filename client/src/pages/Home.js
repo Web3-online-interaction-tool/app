@@ -19,6 +19,7 @@ export default function Home() {
   // Wallet connection states
   const [connectionStatus, setConnectionStatus] = useState(false); // false
   const [myAddress, setMyAddress] = useState("");
+  // "0xb21805e1D5c438984D05AB8e5291f0d8DD489013"
   const [currentAccount, setCurrentAccount] = useState({});
 
   // States related to this client for this connection session

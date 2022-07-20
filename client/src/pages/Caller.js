@@ -128,13 +128,18 @@ const Caller = () => {
 
   // start audio recorder
   function startRecorder(localStream, remoteStream) {
-    // combine two audio tracks
-    let combined = new MediaStream([
-      ...localStream.getAudioTracks(),
-      ...remoteStream.getAudioTracks(),
-    ]);
+    const audioContext = new AudioContext();
+
+    let audioIn_01 = audioContext.createMediaStreamSource(localStream);
+    let audioIn_02 = audioContext.createMediaStreamSource(remoteStream);
+
+    let dest = audioContext.createMediaStreamDestination();
+
+    audioIn_01.connect(dest);
+    audioIn_02.connect(dest);
+
     // create recorder object
-    var mediaRecorder = new MediaRecorder(combined);
+    var mediaRecorder = new MediaRecorder(dest.stream);
 
     // storing the recorder in the ref if needed to be used outside the function
     recorder.current = mediaRecorder;
