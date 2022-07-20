@@ -565,7 +565,7 @@ const Caller = () => {
                   style={{ width: "100%", backgroundColor: "#eeee" }}
                 >
                   {receiverStream.map((s) => (
-                    <Video stream={s} />
+                    <Video stream={s} muted={false} />
                   ))}
                 </div>
                 <div
@@ -573,7 +573,7 @@ const Caller = () => {
                   style={{ width: "100%", backgroundColor: "#eeee" }}
                 >
                   {myStream.map((s) => (
-                    <Video stream={s} />
+                    <Video stream={s} muted={true} />
                   ))}
                 </div>
               </div>
