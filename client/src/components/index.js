@@ -363,7 +363,7 @@ export const MintAndDeposit = ({
       <br />
       {minting && (
         <span>
-          Pleas wait... <br />
+          Please wait... <br />
           {mintText}
         </span>
       )}

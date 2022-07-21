@@ -1,4 +1,4 @@
-const ENVIRONMENT = "PROD"; // PROD / DEV
+const ENVIRONMENT = "DEV"; // PROD / DEV
 export const INTERAKT_CONTRACT_ADDRESS =
   "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
 // "0x5A1f011E8F010f8B6Abf81e75Db34866b685ca54";
@@ -86,3 +86,6 @@ export const PEER_PORT = ENVIRONMENT === "PROD" ? 443 : 9000;
 export const PEER_PATH = "/peer";
 export const PEER_SECURE = ENVIRONMENT === "PROD" ? true : false;
 export const PEER_DEBUG = 2;
+
+export const CERAMIC_SESSION_SCHEMA_ID =
+  "k3y52l7qbv1frxk04vieh9j28r1m5nyjv3hp0ekvopsd411s3t530eo8k7h2qe800";
