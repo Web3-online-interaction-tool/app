@@ -35,6 +35,10 @@ Using ceramic to store the data on IPFS
 
 https://blog.ceramic.network/how-to-store-signed-and-encrypted-data-on-ipfs/
 
+https://blog.ceramic.network/how-to-build-a-simple-notes-app-with-idx/
+https://blog.ceramic.network/how-to-build-a-simple-notes-app-with-idx/
+https://developers.ceramic.network/reference/stream-programs/tile-document/
+
 NFT storage to mint NFT
 
 https://nft.storage/docs/how-to/mint-erc-1155/#minting-your-nft
