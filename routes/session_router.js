@@ -11,6 +11,10 @@ router.post(
       .isString()
       .isLength({ min: 3, max: 400 })
       .withMessage("Invalid toAddress"),
+    check("description")
+      .isString()
+      .isLength({ min: 3, max: 400 })
+      .withMessage("Invalid description"),
     check("sessionId")
       .isString()
       .isLength({ min: 3, max: 400 })
@@ -32,8 +36,14 @@ router.post(
           new CustomError("Invalid fields", 400, "00002", errors.array())
         );
       }
-      const { toAddress, sessionId, peerId, perHourCost, recordAudio } =
-        request.body;
+      const {
+        toAddress,
+        sessionId,
+        peerId,
+        perHourCost,
+        recordAudio,
+        description,
+      } = request.body;
       const session = db.get(sessionId);
 
       if (session) {
@@ -48,8 +58,11 @@ router.post(
         peerId,
         perHourCost,
         recordAudio,
+        description,
       };
+      console.log({ newSession });
       await db.set(sessionId, newSession);
+      console.log("Created the session successfully");
       response.status(201).send({});
     } catch (error) {
       console.log({ error });
@@ -67,24 +80,29 @@ router.get("/:sessionId", async (request, response) => {
     const db = await sessionDbInstance();
     const { sessionId } = request.params;
     const sessionDetails = db.get(sessionId);
-
+    console.log({ sessionDetails });
     if (!sessionDetails)
       return response
         .status(409)
         .send({ message: "Session expired or invalid" });
-    const { toAddress, peerId, perHourCost, fromAddress, recordAudio } =
-      sessionDetails;
+    const {
+      toAddress,
+      peerId,
+      perHourCost,
+      fromAddress,
+      recordAudio,
+      description,
+    } = sessionDetails;
 
-    response
-      .status(200)
-      .send({
-        sessionId,
-        toAddress,
-        peerId,
-        perHourCost,
-        fromAddress,
-        recordAudio,
-      });
+    response.status(200).send({
+      sessionId,
+      toAddress,
+      peerId,
+      perHourCost,
+      fromAddress,
+      recordAudio,
+      description,
+    });
   } catch (error) {
     console.log("Error : ", error);
     response.status(500).send({

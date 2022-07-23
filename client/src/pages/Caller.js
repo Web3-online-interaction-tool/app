@@ -14,7 +14,9 @@ import {
   PEER_PORT,
   PEER_DEBUG,
   DAI_CONTRACT_ADDRESS,
-  MINT_TOKEN,
+  INTERAKT_APP_URL,
+  CERAMIC_SESSION_SCHEMA_ID,
+  unit8ArrayToString,
 } from "../utils/constants";
 import contractABI from "../utils/llama_pay_abi.json";
 import daiContractABI from "../utils/dai_abi.json";
@@ -23,11 +25,15 @@ import {
   Video,
   StopCall,
   MintAndDeposit,
+  createDocument,
 } from "../components/index";
 import { getSessionDetailsAPI } from "../api";
 import { useStore } from "../global_stores";
 import { Peer } from "peerjs";
-import { storeFile, getFile } from "../utils/web3.storage";
+import { storeFile } from "../utils/web3.storage";
+import { IDX } from "@ceramicstudio/idx";
+import config from "./config";
+import LitJsSdk from "lit-js-sdk";
 
 const CallerPaymentDetails = ({ receiverPerHourCost }) => {
   const minutes = useStore((state) => state.minutes);
@@ -44,6 +50,21 @@ const CallerPaymentDetails = ({ receiverPerHourCost }) => {
         <b>~{costPerMinutes(receiverPerHourCost, minutes).toFixed(2)} $</b>
       </span>
       <br />
+    </div>
+  );
+};
+
+const WaitMessage = () => {
+  const minutes = useStore((state) => state.minutes);
+  useEffect(() => {
+    localStorage.setItem("minutes", minutes);
+  }, []);
+  return (
+    <div className="container center">
+      <span>
+        Completed the session. Please approve the transaction to stop streaming
+        payment...
+      </span>
     </div>
   );
 };
@@ -71,7 +92,6 @@ const CurrentBalance = ({ receiverPerHourCost, llamaTimeBalance }) => {
 };
 
 const Caller = () => {
-  const [currentAccount, setCurrentAccount] = useState("");
   const [myAddress, setMyAddress] = useState("");
   const [connectionStatus, setConnectionStatus] = useState(false);
   const [daiBalance, setDaiBalance] = useState(0);
@@ -87,6 +107,7 @@ const Caller = () => {
   const [receiverPeerId, setReceiverPeerId] = useState("");
   const [receiverAddress, setReceiverAddress] = useState("");
   const [receiverPerHourCost, setReceiverPerHourCost] = useState(0);
+  const [receiverDescription, setReceiverDescription] = useState("");
   const [shouldRecordAudio, setShouldRecordAudio] = useState(false);
   const { id } = useParams();
   const [sessionCreated, setSessionCreated] = useState(false);
@@ -102,15 +123,16 @@ const Caller = () => {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
   const [minting, setMinting] = useState(false);
-
   const [ipfsURL, setIpfsURL] = useState(null);
-
   const [sessionId, setSessionId] = useState(null);
+  const [savingInIPFS, setSavingInIPFS] = useState(false);
 
   const myLocalStream = useRef(null);
   const remoteStream = useRef(null);
   const recorder = useRef(null);
   const audioElementRef = useRef(null);
+  const ceramic = useRef(null);
+  const threeID = useRef(null);
 
   const prepareRecording = async (chunks, mimeType) => {
     const blob = new Blob(chunks, { type: mimeType });
@@ -118,12 +140,53 @@ const Caller = () => {
     setRecordingObjectUrl(audioURL);
     audioElementRef.current.src = audioURL;
     // store in web3 storage
+    setSavingInIPFS(true);
     console.log("Attempting to store file in IPFS");
-    const cid = await storeFile([blob], sessionId);
+    // encrypt the blob
+    const { encryptedFile, symmetricKey } = await LitJsSdk.encryptFile({
+      file: blob,
+    });
+    // store it on IPFS using web3.storage
+    const cid = await storeFile([encryptedFile], sessionId);
     console.log({ cid });
-    const files = await getFile(cid);
-    console.log({ files });
-    setIpfsURL(`https://ipfs.io/ipfs/${files[0].cid}`);
+
+    // store the CID and more information in the ceramic
+    const minutes = +localStorage.getItem("minutes");
+
+    const streamId = await createDocument(
+      ceramic,
+      {
+        date: Date.now().toString(),
+        description: receiverDescription,
+        receiver: receiverAddress,
+        moneyPaid: costPerMinutes(receiverPerHourCost, minutes).toFixed(2),
+        totalTimeInMin: minutes ? minutes.toFixed(2) : "0",
+        fileLink: `https://ipfs.io/ipfs/${cid}/${sessionId}`,
+        access: "private",
+        encSecret: unit8ArrayToString(symmetricKey),
+        mimeType,
+      },
+      CERAMIC_SESSION_SCHEMA_ID
+    );
+    // store the ID from the ceramic in the sessionList using IDX
+    const idx = new IDX({
+      ceramic: ceramic.current,
+      aliases: config.definitions,
+    });
+    const sessions = await idx.get("interaktProfile");
+    const _sessions = sessions?.sessions || [];
+    console.log({ _sessions });
+    await idx.set("interaktProfile", {
+      sessions: [
+        {
+          id: streamId.toUrl(),
+          description: receiverDescription,
+        },
+        ..._sessions,
+      ],
+    });
+    setSavingInIPFS(false);
+    setIpfsURL(`${INTERAKT_APP_URL}/session/${streamId}`);
   };
 
   // start audio recorder
@@ -275,13 +338,14 @@ const Caller = () => {
         } else setLlamaTimeBalance(0);
         setFetchedLlamaTimeBalance(true);
 
-        const { toAddress, peerId, perHourCost, recordAudio } =
+        const { toAddress, peerId, perHourCost, recordAudio, description } =
           await getSessionDetailsAPI(id);
         setSessionId(id);
         setReceiverPeerId(peerId);
         setReceiverAddress(toAddress);
         setReceiverPerHourCost(perHourCost);
         setShouldRecordAudio(recordAudio);
+        setReceiverDescription(description);
         if (balance > 0) {
           const numberOfHourCallWithBalance = +balance / +perHourCost;
           const numberOfMinutes = Math.floor(+numberOfHourCallWithBalance * 60);
@@ -295,31 +359,6 @@ const Caller = () => {
     } catch (e) {
       console.log("Error : ", e);
       showToastFunc(e.message || "Session invalid or expired");
-    }
-  };
-
-  const mintAndDepositTestDAI = async () => {
-    try {
-      setMinting(true);
-      console.log({ daiContract });
-      const _mint = await daiContract["mint(uint256)"](MINT_TOKEN);
-      await _mint.wait();
-      // approve
-      const approve = await daiContract.approve(
-        INTERAKT_CONTRACT_ADDRESS,
-        MINT_TOKEN
-      );
-      await approve.wait();
-      // deposit
-
-      const deposit = await streamContract.deposit(MINT_TOKEN);
-      await deposit.wait();
-      // update the balance
-      const Balance = await streamContract.getPayerBalance(myAddress);
-      setLlamaTimeBalance(+ConvertDAIPreciseToReadable(Balance).toFixed(2));
-      setMinting(false);
-    } catch (e) {
-      console.log("Error : ", e);
     }
   };
 
@@ -428,11 +467,12 @@ const Caller = () => {
       {!requestedToStartTheSession ? (
         <div>
           <CheckIfWalletIsConnected
+            ceramic={ceramic}
+            threeID={threeID}
             setConnectionStatus={setConnectionStatus}
             setMyAddress={setMyAddress}
             myAddress={myAddress}
             connectionStatus={connectionStatus}
-            setCurrentAccount={setCurrentAccount}
             setDaiBalance={setDaiBalance}
           />
           <br />
@@ -463,6 +503,11 @@ const Caller = () => {
                   <div>
                     {calculatedNumberOfMinutesLeft ? (
                       <div>
+                        <span>
+                          description : <b>{receiverDescription}</b>
+                        </span>
+                        <br />
+                        <br />
                         <span>
                           Charge per hour : <b>{receiverPerHourCost}$</b>
                         </span>
@@ -590,12 +635,7 @@ const Caller = () => {
           ) : (
             <div className="container center">
               {!completedPayment ? (
-                <div className="container center">
-                  <span>
-                    Completed the session. Please approve the transaction to
-                    stop streaming payment...
-                  </span>
-                </div>
+                <WaitMessage />
               ) : (
                 <CallerPaymentDetails
                   receiverPerHourCost={receiverPerHourCost}
@@ -614,23 +654,20 @@ const Caller = () => {
               ></audio>
               <br />
               <br />
-              {ipfsURL && (
+              {ipfsURL ? (
                 <div>
                   <span>
-                    Stored in IPFS. URL for you for the file is{" "}
+                    Stored in IPFS. URL for you for the file is <br />
+                    <br />
                     <a rel="noreferrer" href={ipfsURL} target="_blank">
                       {ipfsURL}
                     </a>
                   </span>
                   <br />
                   <br />
-                  <span>
-                    This will be stored in IPFS with your wallet DID. Such that
-                    this recording is only accessible by you.
-                    <br />
-                    Work in progress.
-                  </span>
                 </div>
+              ) : (
+                <span>Storing the file in IPFS....</span>
               )}
             </div>
           )}

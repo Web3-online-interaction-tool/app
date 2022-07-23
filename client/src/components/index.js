@@ -8,14 +8,22 @@ import {
 } from "../utils/constants";
 import DAIAbi from "../utils/dai_abi.json";
 import { useStore } from "../global_stores";
+import { CeramicClient } from "@ceramicnetwork/http-client";
+import { EthereumAuthProvider, ThreeIdConnect } from "@3id/connect";
+import { DID } from "dids";
+import { getResolver as getKeyResolver } from "key-did-resolver";
+import { getResolver as get3IDResolver } from "@ceramicnetwork/3id-did-resolver";
+import { TileDocument } from "@ceramicnetwork/stream-tile";
 
 export const CheckIfWalletIsConnected = ({
   setConnectionStatus,
   setMyAddress,
   myAddress,
   connectionStatus,
-  setCurrentAccount,
+
   setDaiBalance,
+  ceramic,
+  threeID,
 }) => {
   const [isCheckingConnectionStatus, setIsCheckingConnectionStatus] =
     useState(false);
@@ -23,60 +31,98 @@ export const CheckIfWalletIsConnected = ({
   const showToastFunc = useStore((state) => state.showToastFunc);
 
   const populateEthereumValues = async (ethereum) => {
-    const chainId = await ethereum.request({ method: "eth_chainId" });
-    const rinkebyTestChainId = 4;
-    console.log("hex", ethers.utils.hexValue(rinkebyTestChainId));
-    if (chainId !== rinkebyTestChainId) {
-      try {
-        await ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [
-            {
-              chainId: ethers.utils.hexValue(rinkebyTestChainId),
-            },
-          ],
-        });
-      } catch (switchError) {
-        // This error code indicates that the chain has not been added to MetaMask.
-        if (switchError.code === 4902) {
-          console.log(
-            "This network is not available in your metamask, please add it"
-          );
-          return showToastFunc(
-            "Please enable test-network on your metamask and try again"
-          );
+    try {
+      const chainId = await ethereum.request({ method: "eth_chainId" });
+      const rinkebyTestChainId = 4;
+      console.log("hex", ethers.utils.hexValue(rinkebyTestChainId));
+      if (chainId !== rinkebyTestChainId) {
+        try {
+          await ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [
+              {
+                chainId: ethers.utils.hexValue(rinkebyTestChainId),
+              },
+            ],
+          });
+        } catch (switchError) {
+          // This error code indicates that the chain has not been added to MetaMask.
+          if (switchError.code === 4902) {
+            console.log(
+              "This network is not available in your metamask, please add it"
+            );
+            return showToastFunc(
+              "Please enable test-network on your metamask and try again"
+            );
+          }
+          console.log("Failed to switch to the network");
         }
-        console.log("Failed to switch to the network");
       }
-    }
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
 
-    const address = await signer.getAddress();
-    console.log({ address });
-    const daiAddress = DAI_CONTRACT_ADDRESS;
-    const daiContract = new ethers.Contract(daiAddress, DAIAbi, provider);
-    console.log({ daiContract });
-    const balance = await daiContract.balanceOf(address);
-    if (balance > 0) setDaiBalance(ConvertDAIPreciseToReadable(balance));
-    else setDaiBalance(0);
-    setMyAddress(address);
-    setConnectionStatus(true);
+      const address = await signer.getAddress();
+      console.log({ address });
+      const daiAddress = DAI_CONTRACT_ADDRESS;
+      const daiContract = new ethers.Contract(daiAddress, DAIAbi, provider);
+      console.log({ daiContract });
+      await authenticateWithEthereum(ethereum);
+      const balance = await daiContract.balanceOf(address);
+      if (balance > 0) setDaiBalance(ConvertDAIPreciseToReadable(balance));
+      else setDaiBalance(0);
+      setMyAddress(address);
+      setConnectionStatus(true);
+    } catch (e) {
+      console.log("Error : ", e);
+    }
   };
+
+  async function authenticateWithEthereum(ethereumProvider) {
+    try {
+      // Request accounts from the Ethereum provider
+      const accounts = await ethereumProvider.request({
+        method: "eth_requestAccounts",
+      });
+      // Create an EthereumAuthProvider using the Ethereum provider and requested account
+      const authProvider = new EthereumAuthProvider(
+        ethereumProvider,
+        accounts[0]
+      );
+      // Connect the created EthereumAuthProvider to the 3ID Connect instance so it can be used to
+      // generate the authentication secret
+      await threeID.current.connect(authProvider);
+
+      const did = new DID({
+        // Get the DID provider from the 3ID Connect instance
+        provider: threeID.current.getDidProvider(),
+        resolver: {
+          ...get3IDResolver(ceramic.current),
+          ...getKeyResolver(),
+        },
+      });
+      // Authenticate the DID using the 3ID provider
+      await did.authenticate();
+      ceramic.current.did = did;
+      console.log("Authenticated!");
+    } catch (e) {
+      console.log("Error : ", e);
+    }
+  }
 
   const checkIfWalletIsConnected = async () => {
     try {
       const { ethereum } = window;
+
       if (!ethereum) {
         alert("Make sure you have metamask!");
         setIsCheckingConnectionStatus(true);
         return;
       }
       let accounts = await ethereum.request({ method: "eth_accounts" });
+      console.log({ accounts });
       if (accounts.length !== 0) {
         const account = accounts[0];
         await populateEthereumValues(ethereum);
-        setCurrentAccount(account);
       }
       setIsCheckingConnectionStatus(true);
     } catch (error) {
@@ -98,7 +144,7 @@ export const CheckIfWalletIsConnected = ({
         await populateEthereumValues(ethereum);
         const accounts = await ethereum.request({ method: "eth_accounts" });
         const account = accounts[0];
-        setCurrentAccount(account);
+        // setCurrentAccount(account);
       } else {
         alert("Install Metamask");
       }
@@ -111,6 +157,8 @@ export const CheckIfWalletIsConnected = ({
   };
 
   useEffect(() => {
+    ceramic.current = new CeramicClient("https://ceramic-clay.3boxlabs.com");
+    threeID.current = new ThreeIdConnect();
     checkIfWalletIsConnected();
   }, []);
 
@@ -455,4 +503,25 @@ export const MintAndDepositInfo = ({
       </div>
     </Popup>
   );
+};
+
+export const load = async (ceramic, id) => {
+  try {
+    return await TileDocument.load(ceramic.current, id);
+  } catch (e) {
+    console.log("Error : ", e);
+  }
+};
+
+export const createDocument = async (ceramic, content, schema) => {
+  try {
+    // The following call will fail if the Ceramic instance does not have an authenticated DID
+    const doc = await TileDocument.create(ceramic.current, content, {
+      schema,
+    });
+    // The stream ID of the created document can then be accessed as the `id` property
+    return doc.id;
+  } catch (e) {
+    console.log("Error : ", e);
+  }
 };

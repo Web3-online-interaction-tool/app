@@ -39,6 +39,10 @@ https://blog.ceramic.network/how-to-build-a-simple-notes-app-with-idx/
 https://blog.ceramic.network/how-to-build-a-simple-notes-app-with-idx/
 https://developers.ceramic.network/reference/stream-programs/tile-document/
 
+Encrypting and decrypting using meta mask
+
+https://betterprogramming.pub/exchanging-encrypted-data-on-blockchain-using-metamask-a2e65a9a896c
+
 NFT storage to mint NFT
 
 https://nft.storage/docs/how-to/mint-erc-1155/#minting-your-nft

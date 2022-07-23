@@ -128,6 +128,7 @@ export default function Receiver() {
       const _perHourCost = sessionDetails.perHourCost;
       const toAddress = sessionDetails.toAddress;
       const recordAudio = sessionDetails.recordAudio;
+      const description = sessionDetails.description;
       setPerHourCost(_perHourCost);
       setShouldRecordAudio(recordAudio);
       const peer = new Peer({
@@ -151,6 +152,7 @@ export default function Receiver() {
             perHourCost: _perHourCost,
             peerId: _id,
             recordAudio,
+            description,
           })
             .then((data) => {
               console.log({ data });

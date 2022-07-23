@@ -14,4 +14,8 @@ export const useStore = create((set) => ({
   setMinutes: (value) => set((state) => ({ minutes: value })),
   currentBalance: 0,
   setCurrentBalance: (value) => ({ currentBalance: value }),
+  ceramic: null,
+  threeID: null,
+  setCeramic: (value) => set((state) => ({ ceramic: value })),
+  setThreeID: (value) => set((state) => ({ threeID: value })),
 }));

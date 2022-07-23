@@ -88,4 +88,23 @@ export const PEER_SECURE = ENVIRONMENT === "PROD" ? true : false;
 export const PEER_DEBUG = 2;
 
 export const CERAMIC_SESSION_SCHEMA_ID =
-  "k3y52l7qbv1frxk04vieh9j28r1m5nyjv3hp0ekvopsd411s3t530eo8k7h2qe800";
+  "k3y52l7qbv1fry8m0h98yh6lxc5yxkv5wtfqvgmsbmpbzq3w3bxfjy3nc596q9atc";
+
+export const blobToBase64 = (blob) => {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+};
+
+export const unit8ArrayToString = (unit8Array) => {
+  let arr = Array.from // if available
+    ? Array.from(unit8Array) // use Array#from
+    : [].map.call(unit8Array, (v) => v); // otherwise map()
+  return JSON.stringify(arr);
+};
+
+export const StringToUnit8Array = (_string) => {
+  return new Uint8Array(JSON.parse(_string));
+};

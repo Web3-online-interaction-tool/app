@@ -4,7 +4,8 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Caller from "./pages/Caller";
 import Receiver from "./pages/Receiver";
-import Test from "./pages/Test_storage";
+import Test from "./pages/ref";
+import Session from "./pages/Session";
 import { Toast } from "./components/index";
 import { useStore } from "./global_stores";
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/caller/:id" element={<Caller />} />
         <Route path="/receiver/:id" element={<Receiver />} />
         <Route path="/test" element={<Test />} />
+        <Route path="/session/:streamId" element={<Session />} />
         <Route path="/" element={<Home />} />
       </Routes>
       <Toast showToast={showToast} toastMessage={toastMessage} />{" "}
