@@ -665,6 +665,14 @@ const Caller = () => {
                   </span>
                   <br />
                   <br />
+                  <button
+                    onClick={() => {
+                      window.open(INTERAKT_APP_URL, "_blank");
+                    }}
+                  >
+                    {" "}
+                    Home{" "}
+                  </button>
                 </div>
               ) : (
                 <span>Storing the file in IPFS....</span>
