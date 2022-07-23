@@ -165,7 +165,7 @@ export const CheckIfWalletIsConnected = ({
   return (
     <div>
       {!isCheckingConnectionStatus ? (
-        <span>checking connection status ..</span>
+        <span>Checking connection status ..</span>
       ) : (
         <div>
           {connectionStatus === true ? (
@@ -422,7 +422,11 @@ export const MintAndDeposit = ({
 export const Popup = (props) => {
   return (
     <div className="popup">
-      <div className="popup_open">{props.children}</div>
+      <div className="popup_open">
+        <div style={{ height: "100%" }} className="inner-container center">
+          {props.children}
+        </div>
+      </div>
     </div>
   );
 };

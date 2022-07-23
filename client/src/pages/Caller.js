@@ -593,7 +593,7 @@ const Caller = () => {
         <div style={{ width: "100vw" }}>
           {!sessionCreated ? (
             <div>
-              <p>Preparing for the call</p>
+              <p>Preparing for the call...</p>
             </div>
           ) : !sessionEnded ? (
             <div>

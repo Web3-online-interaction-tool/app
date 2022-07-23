@@ -20,9 +20,40 @@
   display: flex;
   flex-direction: column;
 }
+.main-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.inner-container {
+  display: flex;
+  flex-direction: column;
+}
 .center {
   justify-content: center;
   align-items: center;
+}
+
+.session-container {
+  min-width: 650px;
+
+  border-width: 1px;
+  border-color: #ddd;
+  border-style: solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px;
+}
+.session-header {
+  text-align: left;
+  align-items: left;
+  justify-content: left;
+  padding: 10px;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: #eee;
+  display: grid;
+  grid-template-columns: 70% 30%;
 }
 
 button {
