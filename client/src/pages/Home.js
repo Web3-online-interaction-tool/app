@@ -255,7 +255,7 @@ export default function Home() {
                 setShowCreateSession(true);
               }}
             >
-              Create an interktion
+              Create an interaktion
             </button>
             <br /> <br />
             <span>Previous Interaktions : </span>

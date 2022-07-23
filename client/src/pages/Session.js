@@ -13,7 +13,7 @@ const fetchingStateConstants = {
   },
   FETCH_BLOB_WEB_STORAGE: {
     name: "FETCH_BLOB_WEB_STORAGE",
-    text: "Fetching encrypted file stored in IPFS using wbe3.storage",
+    text: "Fetching encrypted file stored in IPFS using web3.storage",
   },
   DECRYPT_FILE: {
     name: "DECRYPT_FILE",
@@ -41,7 +41,7 @@ function Profile() {
   const showToastFunc = useStore((state) => state.showToastFunc);
   const [errorInFetching, setErrorInFetching] = useState(false);
   const [acknowledgedConnection, setAcknowledgedConnection] = useState(false);
-  const [date, setDate] = useState('')
+  const [date, setDate] = useState("");
 
   const fetchData = async () => {
     try {
@@ -60,8 +60,8 @@ function Profile() {
         mimeType,
         encSecret,
       } = data.content;
-    //  eslint-disable-next-line no-undef 
-      setDate(dayjs(+date).format('DD/MM/YYYY HH:mm'))
+      //  eslint-disable-next-line no-undef
+      setDate(dayjs(+date).format("DD/MM/YYYY HH:mm"));
       const encryptedBlob = await fetchFile(fileLink);
       setFetchingData(fetchingStateConstants.DECRYPT_FILE.name);
       const decryptedFile = await LitJsSdk.decryptFile({
@@ -105,27 +105,31 @@ function Profile() {
       {connectionStatus === true ? (
         <div className="container center">
           {fetchingState !== fetchingStateConstants.COMPLETED.name ? (
-            <div
-             
-              className="container center"
-            >
+            <div className="container center">
               <span>{fetchingStateConstants[fetchingState].text}</span>
             </div>
           ) : !errorInFetching ? (
-            <div  style={{  boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px", height:"400px", width:"650px"}}className="container center">
+            <div
+              style={{
+                boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
+                height: "400px",
+                width: "650px",
+              }}
+              className="container center"
+            >
               <span>Description : {session.description}</span>
-              <br/>
-            
+              <br />
+
               <span>Paid : {session.moneyPaid}$</span>
-              <br/>
-          
+              <br />
+
               <span>Total number of minutes : {session.totalTimeInMin}</span>
-              <br/>
-             
+              <br />
+
               <span>date : {date}</span>
-              <br/>
-              <span>Reacording : </span>
-              <br/>
+              <br />
+              <span>Recording : </span>
+              <br />
               <audio controls={true} src={audioURL}></audio>
             </div>
           ) : (
