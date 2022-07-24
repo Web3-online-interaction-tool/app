@@ -62,8 +62,10 @@ const WaitMessage = () => {
   return (
     <div className="container center">
       <span>
-        Completed the session. Please approve the transaction to stop streaming
-        payment...
+        <b>
+          IMPORTANT : Completed the session. Please approve/sign the transaction
+          to stop streaming payment...
+        </b>
       </span>
     </div>
   );
@@ -641,6 +643,7 @@ const Caller = () => {
                   receiverPerHourCost={receiverPerHourCost}
                 />
               )}
+              <br />
               <br />
               <span>Recording of your interaction.</span>
               <br />

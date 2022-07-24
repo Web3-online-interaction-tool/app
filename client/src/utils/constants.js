@@ -108,3 +108,7 @@ export const unit8ArrayToString = (unit8Array) => {
 export const StringToUnit8Array = (_string) => {
   return new Uint8Array(JSON.parse(_string));
 };
+
+// polygon dai contract : 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253
+
+// https://shy-snowy-wind.matic-testnet.discover.quiknode.pro/a4078163c12e6cd15006f8a24361f08473e8688b/
