@@ -1,11 +1,14 @@
 const ENVIRONMENT = "PROD"; // PROD / DEV
 export const INTERAKT_CONTRACT_ADDRESS =
   "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
-// "0x5A1f011E8F010f8B6Abf81e75Db34866b685ca54";
 
 export const DAI_CONTRACT_ADDRESS =
-  // "0xD2CBcC8cD99e6eA70001b6CFb7b983dB69286CFA";
   "0x332C7aC34580dfEF553B7726549cEc7015C4B39b";
+
+export const INTERAKT_CONTRACT_ADDRESS_POLYGON =
+  "0xde1C04855c2828431ba637675B6929A684f84C7F";
+export const USDC_CONTRACT_ADDRESS_POLYGON =
+  "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 
 export const MINT_TOKEN = 1000000000000000000000n;
 
@@ -111,4 +114,5 @@ export const StringToUnit8Array = (_string) => {
 
 // polygon dai contract : 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253
 
-// https://shy-snowy-wind.matic-testnet.discover.quiknode.pro/a4078163c12e6cd15006f8a24361f08473e8688b/
+// https://shy-snowy-wind.matic-testnet.discover.quiknode.pro/a4078163c12e6cd15006f8a24361f08473e8688b/ HTTP
+// wss://shy-snowy-wind.matic-testnet.discover.quiknode.pro/a4078163c12e6cd15006f8a24361f08473e8688b/  WSS
