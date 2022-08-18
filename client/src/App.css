@@ -151,6 +151,38 @@ input[type="number"] {
   border-radius: 20px;
   background: white;
 }
+.icon {
+  margin: auto;
+  font-size: 30px;
+}
+.iconButton {
+  padding: 16px;
+  display: flex;
+  direction: column;
+  align-content: center;
+  text-align: center;
+  background-color: #333;
+  width: 30px;
+  border-radius: 50%;
+  color: white;
+}
+.smallIcon {
+  padding: 8px;
+  width: 20px;
+  border-radius: 50%;
+
+  display: flex;
+  direction: column;
+  align-content: center;
+  text-align: center;
+  background-color: white;
+
+  color: #333;
+}
+.iconButton:hover {
+  background-color: darkred;
+  color: #ddd;
+}
 
 /* Animations to fade the snackbar in and out */
 @-webkit-keyframes fadein {

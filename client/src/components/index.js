@@ -14,6 +14,13 @@ import { DID } from "dids";
 import { getResolver as getKeyResolver } from "key-did-resolver";
 import { getResolver as get3IDResolver } from "@ceramicnetwork/3id-did-resolver";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
+import {
+  FaPhoneAlt,
+  FaVolumeUp,
+  FaVideo,
+  FaVideoSlash,
+  FaVolumeMute,
+} from "react-icons/fa";
 
 export const CheckIfWalletIsConnected = ({
   setConnectionStatus,
@@ -274,24 +281,36 @@ export const Timer = ({ shouldRecordAudio }) => {
   );
 };
 
+export const IconButton = ({ OnClick, children }) => {
+  return (
+    <div className="iconButton clickable" onClick={OnClick}>
+      {children}
+    </div>
+  );
+};
+
 export const StopCall = ({
   endSession,
   minutes,
   setMinutes,
   shouldRecordAudio,
+  isVideoEnabled,
+  toggleVideo,
+  toggleAudio,
+  isAudioEnabled,
 }) => {
   return (
     <div
       style={{
-        width: "140px",
-        marginLeft: "-70px",
+        width: "240px",
+        marginLeft: "-120px",
         padding: "10px",
         position: "Fixed",
         bottom: "30px",
         left: "50%",
       }}
     >
-      <div
+      {/* <div
         className="clickable"
         style={{
           width: "100px",
@@ -304,7 +323,43 @@ export const StopCall = ({
         onClick={endSession}
       >
         End Call
+      </div> */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "33.33% 33.33% 33.33%",
+
+          textAlign: "center",
+        }}
+      >
+        <div className="iconButton clickable" onClick={endSession}>
+          <FaPhoneAlt className="icon" />
+        </div>
+
+        <div
+          className="iconButton clickable"
+          onClick={toggleVideo}
+          style={{ backgroundColor: !isVideoEnabled ? "darkRed" : "#333" }}
+        >
+          {isVideoEnabled ? (
+            <FaVideo className="icon" />
+          ) : (
+            <FaVideoSlash className="icon" />
+          )}
+        </div>
+        <div
+          className="iconButton clickable"
+          onClick={toggleAudio}
+          style={{ backgroundColor: !isAudioEnabled ? "darkRed" : "#333" }}
+        >
+          {isAudioEnabled ? (
+            <FaVolumeUp className="icon" />
+          ) : (
+            <FaVolumeMute className="icon" />
+          )}
+        </div>
       </div>
+
       <br />
       <Timer
         minutes={minutes}

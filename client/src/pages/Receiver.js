@@ -17,6 +17,7 @@ import {
 } from "../utils/constants";
 import { useStore } from "../global_stores";
 import { Video, StopCall } from "../components";
+import { FaUserAltSlash, FaVolumeUp, FaVolumeMute } from "react-icons/fa";
 
 const ReceiverPaymentDetails = ({ perHourCost }) => {
   const minutes = useStore((state) => state.minutes);
@@ -52,6 +53,12 @@ export default function Receiver() {
   const [perHourCost, setPerHourCost] = useState(0);
   const [shouldRecordAudio, setShouldRecordAudio] = useState(false);
 
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+
+  const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
+  const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
+
   const myLocalStream = useRef(null);
 
   const handleCallData = (message) => {
@@ -77,9 +84,61 @@ export default function Receiver() {
         setPaymentDone(true);
 
         break;
+      case SESSION_MESSAGES.MUTE_OPTIONS:
+        if (message.payload.type === "audio")
+          setIsRemoteAudioEnabled(message.payload.status);
+        if (message.payload.type === "video")
+          setIsRemoteVideoEnabled(message.payload.status);
+
+        break;
       default:
         break;
     }
+  };
+
+  const disableMyAudio = () => {
+    // check for audio track and disable the streaming the audio track
+    const newIsAudioEnabled = !isAudioEnabled;
+    if (
+      myLocalStream.current != null &&
+      myLocalStream.current.getAudioTracks().length > 0
+    ) {
+      setIsAudioEnabled(newIsAudioEnabled);
+
+      myLocalStream.current.getAudioTracks()[0].enabled = newIsAudioEnabled;
+    }
+    // send message of the audio enabled status for other peer to show the block muted symbol
+    if (conn)
+      conn.send(
+        JSON.stringify({
+          type: SESSION_MESSAGES.MUTE_OPTIONS,
+          payload: { type: "audio", status: newIsAudioEnabled },
+        })
+      );
+    // show muted symbol
+  };
+  /**
+   * Stop streaming video track to the peer
+   */
+  const disableMyVideo = () => {
+    const isNewVideoEnabled = !isVideoEnabled;
+    if (
+      myLocalStream.current != null &&
+      myLocalStream.current.getVideoTracks().length > 0
+    ) {
+      setIsVideoEnabled(isNewVideoEnabled);
+
+      myLocalStream.current.getVideoTracks()[0].enabled = isNewVideoEnabled;
+    }
+    // send message of the audio enabled status for other peer to show the block muted symbol
+    if (conn)
+      conn.send(
+        JSON.stringify({
+          type: SESSION_MESSAGES.MUTE_OPTIONS,
+          payload: { type: "video", status: isNewVideoEnabled },
+        })
+      );
+    // show something else instead of black screen
   };
 
   const ready = (_conn) => {
@@ -294,23 +353,57 @@ export default function Receiver() {
           className="container center"
           style={{ width: "100%", backgroundColor: "#ddd" }}
         >
-          {callerStream.map((s) => (
-            <Video stream={s} muted={false} />
-          ))}
+          {callerStream.map((s) =>
+            isRemoteVideoEnabled ? (
+              <Video stream={s} muted={false} />
+            ) : (
+              <FaUserAltSlash className="icon" />
+            )
+          )}
+          <div style={{ position: "absolute", bottom: "15vh", left: "30px" }}>
+            {isRemoteAudioEnabled ? (
+              <div className="smallIcon">
+                <FaVolumeUp className="icon" />
+              </div>
+            ) : (
+              <div className="smallIcon">
+                <FaVolumeMute className="icon" />
+              </div>
+            )}
+          </div>
         </div>
       )}
       <div
         className="container center"
         style={{ width: "100%", backgroundColor: "#ddd" }}
       >
-        {myStream.map((s) => (
-          <Video stream={s} muted={true} />
-        ))}
+        {myStream.map((s) =>
+          isVideoEnabled ? (
+            <Video stream={s} muted={true} />
+          ) : (
+            <FaUserAltSlash className="icon" />
+          )
+        )}
+        {/* <div style={{ position: "absolute", bottom: "15vh", right: "30px" }}>
+          {isAudioEnabled ? (
+            <div className="iconButton smallIcon">
+              <FaVolumeUp className="icon" />
+            </div>
+          ) : (
+            <div className="iconButton smallIcon">
+              <FaVolumeMute className="icon" />
+            </div>
+          )}
+        </div> */}
       </div>
       {peerJoinedTheSession ? (
         <StopCall
-          endSession={endSession}
           shouldRecordAudio={shouldRecordAudio}
+          endSession={endSession}
+          isVideoEnabled={isVideoEnabled}
+          toggleVideo={disableMyVideo}
+          toggleAudio={disableMyAudio}
+          isAudioEnabled={isAudioEnabled}
         />
       ) : null}
     </div>

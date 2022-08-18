@@ -34,6 +34,7 @@ import { storeFile } from "../utils/web3.storage";
 import { IDX } from "@ceramicstudio/idx";
 import config from "./config";
 import LitJsSdk from "lit-js-sdk";
+import { FaUserAltSlash, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
 
 const CallerPaymentDetails = ({ receiverPerHourCost }) => {
   const minutes = useStore((state) => state.minutes);
@@ -129,12 +130,84 @@ const Caller = () => {
   const [sessionId, setSessionId] = useState(null);
   const [savingInIPFS, setSavingInIPFS] = useState(false);
 
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+
+  const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
+  const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
+
   const myLocalStream = useRef(null);
   const remoteStream = useRef(null);
   const recorder = useRef(null);
   const audioElementRef = useRef(null);
   const ceramic = useRef(null);
   const threeID = useRef(null);
+
+  //   let mic_switch = true;
+  // let video_switch = true;
+
+  // function toggleVideo() {
+  //   if(localStream != null && localStream.getVideoTracks().length > 0){
+  //     video_switch = !video_switch;
+
+  //     localStream.getVideoTracks()[0].enabled = video_switch;
+  //   }
+
+  // }
+
+  // function toggleMic() {
+  //   if(localStream != null && localStream.getAudioTracks().length > 0){
+  //     mic_switch = !mic_switch;
+
+  //     localStream.getAudioTracks()[0].enabled = mic_switch;
+  //   }
+  /**
+   * Stop streaming audio track to the peer
+   */
+  const disableMyAudio = () => {
+    // check for audio track and disable the streaming the audio track
+    const newIsAudioEnabled = !isAudioEnabled;
+    if (
+      myLocalStream.current != null &&
+      myLocalStream.current.getAudioTracks().length > 0
+    ) {
+      setIsAudioEnabled(newIsAudioEnabled);
+
+      myLocalStream.current.getAudioTracks()[0].enabled = newIsAudioEnabled;
+    }
+    // send message of the audio enabled status for other peer to show the block muted symbol
+    if (conn)
+      conn.send(
+        JSON.stringify({
+          type: SESSION_MESSAGES.MUTE_OPTIONS,
+          payload: { type: "audio", status: newIsAudioEnabled },
+        })
+      );
+    // show muted symbol
+  };
+  /**
+   * Stop streaming video track to the peer
+   */
+  const disableMyVideo = () => {
+    const isNewVideoEnabled = !isVideoEnabled;
+    if (
+      myLocalStream.current != null &&
+      myLocalStream.current.getVideoTracks().length > 0
+    ) {
+      setIsVideoEnabled(isNewVideoEnabled);
+
+      myLocalStream.current.getVideoTracks()[0].enabled = isNewVideoEnabled;
+    }
+    // send message of the audio enabled status for other peer to show the block muted symbol
+    if (conn)
+      conn.send(
+        JSON.stringify({
+          type: SESSION_MESSAGES.MUTE_OPTIONS,
+          payload: { type: "video", status: isNewVideoEnabled },
+        })
+      );
+    // show something else instead of black screen
+  };
 
   const prepareRecording = async (chunks, mimeType) => {
     const blob = new Blob(chunks, { type: mimeType });
@@ -298,6 +371,13 @@ const Caller = () => {
         endSession();
         break;
       case SESSION_MESSAGES.ACKNOWLEDGE_CONNECTION:
+        break;
+      case SESSION_MESSAGES.MUTE_OPTIONS:
+        if (message.payload.type === "audio")
+          setIsRemoteAudioEnabled(message.payload.status);
+        if (message.payload.type === "video")
+          setIsRemoteVideoEnabled(message.payload.status);
+
         break;
       default:
         break;
@@ -616,22 +696,51 @@ const Caller = () => {
                   className="container center"
                   style={{ width: "100%", backgroundColor: "#eeee" }}
                 >
-                  {receiverStream.map((s) => (
-                    <Video stream={s} muted={false} />
-                  ))}
+                  {receiverStream.map((s) =>
+                    isRemoteVideoEnabled ? (
+                      <Video stream={s} muted={false} />
+                    ) : (
+                      <FaUserAltSlash className="icon" />
+                    )
+                  )}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "15vh",
+                      left: "30px",
+                    }}
+                  >
+                    {isRemoteAudioEnabled ? (
+                      <div className="smallIcon">
+                        <FaVolumeUp className="icon" />
+                      </div>
+                    ) : (
+                      <div className="smallIcon">
+                        <FaVolumeMute className="icon" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div
                   className="container center"
                   style={{ width: "100%", backgroundColor: "#eeee" }}
                 >
-                  {myStream.map((s) => (
-                    <Video stream={s} muted={true} />
-                  ))}
+                  {myStream.map((s) =>
+                    isVideoEnabled ? (
+                      <Video stream={s} muted={true} />
+                    ) : (
+                      <FaUserAltSlash className="icon" />
+                    )
+                  )}
                 </div>
               </div>
               <StopCall
                 shouldRecordAudio={shouldRecordAudio}
                 endSession={endSession}
+                isVideoEnabled={isVideoEnabled}
+                toggleVideo={disableMyVideo}
+                toggleAudio={disableMyAudio}
+                isAudioEnabled={isAudioEnabled}
               />
             </div>
           ) : (
