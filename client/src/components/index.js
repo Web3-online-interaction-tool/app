@@ -15,7 +15,7 @@ import { getResolver as getKeyResolver } from "key-did-resolver";
 import { getResolver as get3IDResolver } from "@ceramicnetwork/3id-did-resolver";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
 import {
-  FaPhoneAlt,
+  FaPhoneSlash,
   FaVolumeUp,
   FaVideo,
   FaVideoSlash,
@@ -332,9 +332,11 @@ export const StopCall = ({
           textAlign: "center",
         }}
       >
-        <div className="iconButton clickable" onClick={endSession}>
+        {/* <div className="iconButton clickable" onClick={endSession}>
           <FaPhoneAlt className="icon" />
-        </div>
+        </div> */}
+
+        {/* FaPhoneSlash */}
 
         <div
           className="iconButton clickable"
@@ -358,6 +360,9 @@ export const StopCall = ({
             <FaVolumeMute className="icon" />
           )}
         </div>
+      </div>
+      <div className="iconButton clickable" onClick={endSession}>
+        <FaPhoneSlash className="icon" />
       </div>
 
       <br />
