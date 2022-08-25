@@ -360,9 +360,9 @@ export const StopCall = ({
             <FaVolumeMute className="icon" />
           )}
         </div>
-      </div>
-      <div className="iconButton clickable" onClick={endSession}>
-        <FaPhoneSlash className="icon" />
+        <div className="iconButton clickable" onClick={endSession}>
+          <FaPhoneSlash className="icon" />
+        </div>
       </div>
 
       <br />
